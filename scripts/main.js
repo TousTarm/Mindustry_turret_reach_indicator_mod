@@ -40,26 +40,27 @@ function refresh(){
 }
 
 // plain JS Math only: from JS, Mathf.clamp(x, -1, 1) resolves to the int overload and truncates x to 0
+// let, not const, inside loops: the game's Rhino keeps a const at its first-iteration value
 // Outline of the union of all circles: for each circle, find the angle ranges covered by
 // other circles (exact intersection angles), then draw only the uncovered arcs.
 function buildOutline(){
-    const TAU = Math.PI * 2;
+    let TAU = Math.PI * 2;
     for(let i = 0; i < circles.length; i++){
-        const c = circles[i], r = c[2];
-        const covered = [];
+        let c = circles[i], r = c[2];
+        let covered = [];
         let hidden = false;
 
         for(let j = 0; j < circles.length && !hidden; j++){
             if(j == i) continue;
-            const o = circles[j], R = o[2];
-            const d = Math.hypot(o[0] - c[0], o[1] - c[1]);
+            let o = circles[j], R = o[2];
+            let d = Math.hypot(o[0] - c[0], o[1] - c[1]);
             if(d >= r + R) continue; // apart
             // c inside o; identical circles: only the first one is drawn
             if(d + r < R || (d + r == R && (r < R || j < i))){ hidden = true; break; }
             if(d + R <= r) continue; // o sits inside c
 
-            const phi = Math.atan2(o[1] - c[1], o[0] - c[0]);
-            const alpha = Math.acos(Math.max(-1, Math.min(1, (r * r + d * d - R * R) / (2 * r * d))));
+            let phi = Math.atan2(o[1] - c[1], o[0] - c[0]);
+            let alpha = Math.acos(Math.max(-1, Math.min(1, (r * r + d * d - R * R) / (2 * r * d))));
             let s = ((phi - alpha) % TAU + TAU) % TAU, e = s + alpha * 2;
             if(e > TAU){ covered.push([s, TAU], [0, e - TAU]); }else{ covered.push([s, e]); }
         }
@@ -67,7 +68,7 @@ function buildOutline(){
 
         // merge covered ranges, then walk the gaps between them
         covered.sort((a, b) => a[0] - b[0]);
-        const step = TAU / Math.max(32, Math.min(180, Math.round(r / 2)));
+        let step = TAU / Math.max(32, Math.min(180, Math.round(r / 2)));
         let at = 0;
         covered.concat([[TAU, TAU]]).forEach(iv => {
             if(iv[0] > at) arc(c, at, iv[0], step);
@@ -77,11 +78,11 @@ function buildOutline(){
 }
 
 function arc(c, from, to, step){
-    const n = Math.max(1, Math.ceil((to - from) / step));
+    let n = Math.max(1, Math.ceil((to - from) / step));
     let px = c[0] + Math.cos(from) * c[2], py = c[1] + Math.sin(from) * c[2];
     for(let k = 1; k <= n; k++){
-        const a = from + (to - from) * k / n;
-        const x = c[0] + Math.cos(a) * c[2], y = c[1] + Math.sin(a) * c[2];
+        let a = from + (to - from) * k / n;
+        let x = c[0] + Math.cos(a) * c[2], y = c[1] + Math.sin(a) * c[2];
         segments.push(px, py, x, y);
         px = x; py = y;
     }
