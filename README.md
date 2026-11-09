@@ -13,6 +13,7 @@ so you can see your base's defensive coverage and spot the gaps an enemy could s
   - **All turrets**: every turret's range
   - **Ground-targeting**: only turrets that can hit ground units
   - **Air-targeting**: only turrets that can hit air units
+  - **Ground + air**: both of the above at once, each in its own color, so you can compare the two
   - **Fire extinguishing**: liquid turrets that can put out fires (Wave, Tsunami, ...)
   - **Individual circles**: draw every turret's circle instead of the merged outline
 - Shows on the fullscreen map and on the corner minimap.

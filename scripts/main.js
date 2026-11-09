@@ -1,9 +1,12 @@
 // Turret Reach Indicator: draws turret ranges of the player's team on the minimap.
 
+const GROUND = Color.valueOf("ff8c42"), AIR = Color.valueOf("b388ff");
+// parts: draw several filters at once, each as its own layer in its own color
 const FILTERS = [
     {id: "all", label: "All turrets", color: Pal.accent, test: b => true},
-    {id: "ground", label: "Ground-targeting", color: Color.valueOf("ff8c42"), test: b => b.targetGround === true},
-    {id: "air", label: "Air-targeting", color: Color.valueOf("b388ff"), test: b => b.targetAir === true},
+    {id: "ground", label: "Ground-targeting", color: GROUND, test: b => b.targetGround === true},
+    {id: "air", label: "Air-targeting", color: AIR, test: b => b.targetAir === true},
+    {id: "both", label: "[#" + GROUND + "]Ground [white]+ [#" + AIR + "]air", parts: ["ground", "air"]},
     {id: "extinguish", label: "Fire extinguishing", color: Color.valueOf("4fc3f7"), test: b => b instanceof LiquidTurret && b.extinguish}
 ];
 
@@ -15,14 +18,14 @@ let optionsOpen = false;
 // cache, rebuilt every REFRESH_MS
 const REFRESH_MS = 500;
 let lastRefresh = 0;
-let circles = []; // [x, y, r] in world units
-let segments = []; // flat x1,y1,x2,y2 list of the merged outline
-let fills = []; // flat x,y,w list of FILL_ROW-high strips covering the union
+// one layer per drawn filter: {color, circles: [x, y, r] in world units,
+// segments: flat x1,y1,x2,y2 of the merged outline, fills: flat x,y,w of FILL_ROW-high strips}
+let layers = [];
 const FILL_ROW = 2; // world units; the outline hides the stair-step edge
 const FILL_ALPHA = 0.15;
 
-function filter(){
-    return FILTERS.find(f => f.id == filterId) || FILTERS[0];
+function filter(id){
+    return FILTERS.find(f => f.id == id) || FILTERS[0];
 }
 
 function save(key, value){
@@ -31,22 +34,22 @@ function save(key, value){
 }
 
 function refresh(){
-    circles = [];
-    segments = [];
-    fills = [];
-    const f = filter();
-
-    Vars.indexer.getFlagged(Vars.player.team(), BlockFlag.turret).each(b => {
-        if(b.block instanceof BaseTurret && f.test(b.block)) circles.push([b.x, b.y, b.range()]);
+    const f = filter(filterId);
+    layers = (f.parts || [f.id]).map(id => {
+        const p = filter(id);
+        const L = {color: p.color, circles: [], segments: [], fills: []};
+        Vars.indexer.getFlagged(Vars.player.team(), BlockFlag.turret).each(b => {
+            if(b.block instanceof BaseTurret && p.test(b.block)) L.circles.push([b.x, b.y, b.range()]);
+        });
+        if(!individual) buildOutline(L);
+        buildFill(L);
+        return L;
     });
-
-    if(!individual) buildOutline();
-    buildFill();
 }
 
 // Union of all circles as horizontal strips, so overlapping circles don't stack their alpha.
-function buildFill(){
-    let rows = {};
+function buildFill(L){
+    let circles = L.circles, fills = L.fills, rows = {};
     circles.forEach(c => {
         for(let k = Math.floor((c[1] - c[2]) / FILL_ROW); k <= Math.floor((c[1] + c[2]) / FILL_ROW); k++){
             let dy = (k + 0.5) * FILL_ROW - c[1];
@@ -70,7 +73,8 @@ function buildFill(){
 // let, not const, inside loops: the game's Rhino keeps a const at its first-iteration value
 // Outline of the union of all circles: for each circle, find the angle ranges covered by
 // other circles (exact intersection angles), then draw only the uncovered arcs.
-function buildOutline(){
+function buildOutline(L){
+    let circles = L.circles, segments = L.segments;
     let TAU = Math.PI * 2;
     for(let i = 0; i < circles.length; i++){
         let c = circles[i], r = c[2];
@@ -98,13 +102,13 @@ function buildOutline(){
         let step = TAU / Math.max(32, Math.min(180, Math.round(r / 2)));
         let at = 0;
         covered.concat([[TAU, TAU]]).forEach(iv => {
-            if(iv[0] > at) arc(c, at, iv[0], step);
+            if(iv[0] > at) arc(segments, c, at, iv[0], step);
             at = Math.max(at, iv[1]);
         });
     }
 }
 
-function arc(c, from, to, step){
+function arc(segments, c, from, to, step){
     let n = Math.max(1, Math.ceil((to - from) / step));
     let px = c[0] + Math.cos(from) * c[2], py = c[1] + Math.sin(from) * c[2];
     for(let k = 1; k <= n; k++){
@@ -115,9 +119,10 @@ function arc(c, from, to, step){
     }
 }
 
-function drawLines(){
+function drawLines(L){
+    let segments = L.segments;
     if(individual){
-        circles.forEach(c => Lines.circle(c[0], c[1], c[2]));
+        L.circles.forEach(c => Lines.circle(c[0], c[1], c[2]));
     }else{
         for(let i = 0; i < segments.length; i += 4) Lines.line(segments[i], segments[i + 1], segments[i + 2], segments[i + 3]);
     }
@@ -126,21 +131,26 @@ function drawLines(){
 // Drawn by the game's own minimap code (corner minimap and fullscreen map), already in world coordinates.
 const marker = extend(MapObjectives.ObjectiveMarker, {
     draw(scaleFactor){
-        if(!enabled || circles.length == 0) return;
+        if(!enabled) return;
         // world -> screen scale of the current minimap, so lines keep the same pixel width at any zoom
         const px = 1 / Draw.trans().val[0];
 
-        Draw.color(filter().color, FILL_ALPHA);
-        for(let i = 0; i < fills.length; i += 3) Fill.crect(fills[i], fills[i + 1], fills[i + 2], FILL_ROW);
+        layers.forEach(L => {
+            Draw.color(L.color, FILL_ALPHA);
+            for(let i = 0; i < L.fills.length; i += 3) Fill.crect(L.fills[i], L.fills[i + 1], L.fills[i + 2], FILL_ROW);
+        });
 
         // dark underlay so the line reads on any terrain
         Draw.color(Pal.darkestGray, 0.8);
         Lines.stroke(Scl.scl(4) * px);
-        drawLines();
+        layers.forEach(drawLines);
 
-        Draw.color(filter().color);
+        // all underlays first, so one layer's underlay never covers another layer's line
         Lines.stroke(Scl.scl(2) * px);
-        drawLines();
+        layers.forEach(L => {
+            Draw.color(L.color);
+            drawLines(L);
+        });
         Draw.reset();
     }
 });
@@ -191,7 +201,7 @@ Events.on(ClientLoadEvent, () => {
                 o.defaults().height(32).growX();
 
                 FILTERS.forEach(f => {
-                    o.button("[#" + f.color + "]" + f.label, Styles.clearTogglet, () => {
+                    o.button((f.color ? "[#" + f.color + "]" : "") + f.label, Styles.clearTogglet, () => {
                         filterId = f.id;
                         save("tri-filter", f.id);
                     }).checked(b => filterId == f.id);
