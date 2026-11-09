@@ -8,6 +8,7 @@ so you can see your base's defensive coverage and spot the gaps an enemy could s
 - Compact **Turret reach** panel in the top-right corner of the fullscreen map (`M` key): eye button toggles the overlay.
 - Coverage is drawn as one merged outline: overlapping ranges show only their outer edge, with no lines inside.
   Holes and gaps in your defense are easy to spot.
+- Covered area is lightly shaded (overlaps don't get darker).
 - Gear button opens the options:
   - **All turrets**: every turret's range
   - **Ground-targeting**: only turrets that can hit ground units

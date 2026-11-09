@@ -17,6 +17,9 @@ const REFRESH_MS = 500;
 let lastRefresh = 0;
 let circles = []; // [x, y, r] in world units
 let segments = []; // flat x1,y1,x2,y2 list of the merged outline
+let fills = []; // flat x,y,w list of FILL_ROW-high strips covering the union
+const FILL_ROW = 2; // world units; the outline hides the stair-step edge
+const FILL_ALPHA = 0.15;
 
 function filter(){
     return FILTERS.find(f => f.id == filterId) || FILTERS[0];
@@ -30,6 +33,7 @@ function save(key, value){
 function refresh(){
     circles = [];
     segments = [];
+    fills = [];
     const f = filter();
 
     Vars.indexer.getFlagged(Vars.player.team(), BlockFlag.turret).each(b => {
@@ -37,6 +41,29 @@ function refresh(){
     });
 
     if(!individual) buildOutline();
+    buildFill();
+}
+
+// Union of all circles as horizontal strips, so overlapping circles don't stack their alpha.
+function buildFill(){
+    let rows = {};
+    circles.forEach(c => {
+        for(let k = Math.floor((c[1] - c[2]) / FILL_ROW); k <= Math.floor((c[1] + c[2]) / FILL_ROW); k++){
+            let dy = (k + 0.5) * FILL_ROW - c[1];
+            if(Math.abs(dy) >= c[2]) continue;
+            let w = Math.sqrt(c[2] * c[2] - dy * dy);
+            (rows[k] || (rows[k] = [])).push([c[0] - w, c[0] + w]);
+        }
+    });
+    for(let k in rows){
+        let iv = rows[k].sort((a, b) => a[0] - b[0]);
+        let s = iv[0][0], e = iv[0][1];
+        for(let m = 1; m < iv.length; m++){
+            if(iv[m][0] > e){ fills.push(s, k * FILL_ROW, e - s); s = iv[m][0]; }
+            e = Math.max(e, iv[m][1]);
+        }
+        fills.push(s, k * FILL_ROW, e - s);
+    }
 }
 
 // plain JS Math only: from JS, Mathf.clamp(x, -1, 1) resolves to the int overload and truncates x to 0
@@ -102,6 +129,9 @@ const marker = extend(MapObjectives.ObjectiveMarker, {
         if(!enabled || circles.length == 0) return;
         // world -> screen scale of the current minimap, so lines keep the same pixel width at any zoom
         const px = 1 / Draw.trans().val[0];
+
+        Draw.color(filter().color, FILL_ALPHA);
+        for(let i = 0; i < fills.length; i += 3) Fill.crect(fills[i], fills[i + 1], fills[i + 2], FILL_ROW);
 
         // dark underlay so the line reads on any terrain
         Draw.color(Pal.darkestGray, 0.8);
