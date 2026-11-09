@@ -1,8 +1,10 @@
 name: turret-reach-indicator
 displayName: Turret Reach Indicator
+subtitle: See your turret coverage on the map
 author: Tomáš Rindt
 version: "1.0"
 minGameVersion: "147"
-description: "Shows turret ranges of your team on the minimap (all / merged / ground / air / extinguish / single type). Client-side only."
+repo: TousTarm/Mindustry_turret_reach_indicator_mod
+description: "Shows your team's turret coverage on the map as one merged outline, so gaps in your defense are easy to spot. Filters for ground, air, ground + air, and fire-extinguishing turrets. Open the map (M) and use the Turret reach panel in the top-right corner. Client-side only: works on any server, and other players don't need it."
 # client-side only: servers and other players don't need it
 hidden: true

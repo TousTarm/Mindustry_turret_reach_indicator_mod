@@ -1,75 +1,61 @@
 # Turret Reach Indicator
 
-A small client-side Mindustry mod that draws your team's turret ranges on the minimap,
-so you can see your base's defensive coverage and spot the gaps an enemy could slip through.
+A client-side Mindustry mod that shows your team's turret coverage on the map,
+so you can see at a glance where your defense reaches and where the gaps are.
+
+<img src="preview.png" alt="Ground and air coverage drawn as two overlapping layers" width="256">
 
 ## Features
 
-- Compact **Turret reach** panel in the top-right corner of the fullscreen map (`M` key): eye button toggles the overlay.
-- Coverage is drawn as one merged outline: overlapping ranges show only their outer edge, with no lines inside.
-  Holes and gaps in your defense are easy to spot.
-- Covered area is lightly shaded (overlaps don't get darker).
-- Gear button opens the options:
-  - **All turrets**: every turret's range
-  - **Ground-targeting**: only turrets that can hit ground units
-  - **Air-targeting**: only turrets that can hit air units
-  - **Ground + air**: both of the above at once, each in its own color, so you can compare the two
-  - **Fire extinguishing**: liquid turrets that can put out fires (Wave, Tsunami, ...)
-  - **Individual circles**: draw every turret's circle instead of the merged outline
-- Shows on the fullscreen map and on the corner minimap.
-- Ranges include ammo range bonuses and update live as you build or lose turrets.
+- **Merged coverage outline.** Overlapping ranges are drawn as one shape with only its outer edge,
+  so holes and gaps in your defense stand out. The covered area is lightly shaded,
+  and overlaps don't get darker.
+- **Filters** for what to show:
+
+  | Filter             | Shows                                                        |
+  |--------------------|--------------------------------------------------------------|
+  | All turrets        | every turret                                                 |
+  | Ground-targeting   | turrets that can hit ground units                            |
+  | Air-targeting      | turrets that can hit air units                               |
+  | Ground + air       | both layers at once in their own colors, to compare them     |
+  | Fire extinguishing | liquid turrets that put out fires (Wave, Tsunami, ...)       |
+
+- **Individual circles** option, if you prefer every turret's own range circle.
+- Works on the fullscreen map and the corner minimap.
+- Ranges include ammo range bonuses and update as you build or lose turrets.
 - Settings are remembered between games.
-- Client-side only (`hidden: true`): works on servers that don't have the mod, and other players don't need it.
+- **Client-side only.** Works on any server, including ones without the mod. Other players don't need it.
 
 ## Installation
 
 Requires Mindustry v8 (build 147 or newer).
 
-**Option A: import from GitHub (easiest)**
+**From GitHub (in game)**
 
-1. In game: **Mods → Import Mod → Import From GitHub**.
-2. Enter `TousTarm/Mindustry_turret_reach_indicator_mod`.
+1. **Mods → Import Mod → Import From GitHub**
+2. Enter `TousTarm/Mindustry_turret_reach_indicator_mod`
 3. Restart the game.
 
-**Option B: import as zip**
+**From a zip file**
 
-1. Zip `mod.hjson` and `scripts` so `mod.hjson` sits at the zip root:
-   ```sh
-   zip -r turret-reach-indicator.zip mod.hjson scripts
-   ```
-2. In game: **Mods → Import Mod → Import File** and choose the zip.
+1. On GitHub, click **Code → Download ZIP**.
+2. In game: **Mods → Import Mod → Import File** and pick the downloaded zip.
 3. Restart the game.
-
-**Option C: copy the files**
-
-Create a `turret-reach-indicator` folder in your Mindustry mods directory, copy `mod.hjson` and `scripts` into it, and restart:
-
-| OS      | Mods directory                                     |
-|---------|----------------------------------------------------|
-| Windows | `%AppData%\Mindustry\mods\`                        |
-| Linux   | `~/.local/share/Mindustry/mods/`                   |
-| macOS   | `~/Library/Application Support/Mindustry/mods/`    |
-| Steam   | `<Steam>/steamapps/common/Mindustry/saves/mods/`   |
 
 ## Usage
 
 1. Start or join a game and press `M` to open the map.
-2. Click the eye button next to **Turret reach** (top-right) to turn the overlay on or off.
-3. Click the gear next to it to pick which turrets to show.
+2. Click the eye button next to **Turret reach** (top-right corner) to show or hide the overlay.
+3. Click the gear button to choose a filter.
 
-## Files
+## Performance and safety
 
-```
-├── mod.hjson         # mod metadata
-└── scripts/main.js   # all the logic
-```
-
-## How it works
-
-The mod adds an invisible map marker that the game's own minimap renderer draws each frame,
-so circles land in the right place at any zoom level without patching the game.
-The marker is never added to the saved marker list, so it never ends up in save or map files.
-Turret positions and ranges are refreshed twice per second.
+- Turret positions are checked twice per second. When they change, the new overlay is computed in small
+  slices across frames (at most 3 ms per frame), so even bases with thousands of turrets don't freeze the game.
+- The mod makes no network requests, reads or writes no files, and only stores its own three settings
+  (`tri-enabled`, `tri-filter`, `tri-individual`).
+- The overlay is drawn through an in-memory map marker that is never added to the saved marker list,
+  so it never ends up in save files, maps, or data sent to other players.
 
 ## Limitations
 
@@ -77,4 +63,4 @@ Turret positions and ranges are refreshed twice per second.
 
 ## License
 
-MIT
+[MIT](LICENSE)
