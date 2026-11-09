@@ -23,18 +23,24 @@ so you can see your base's defensive coverage and spot the gaps an enemy could s
 
 Requires Mindustry v8 (build 147 or newer).
 
-**Option A: import as zip**
+**Option A: import from GitHub (easiest)**
 
-1. Zip the *contents* of the `turret-reach-indicator` folder so `mod.hjson` sits at the zip root:
+1. In game: **Mods → Import Mod → Import From GitHub**.
+2. Enter `TousTarm/Mindustry_turret_reach_indicator_mod`.
+3. Restart the game.
+
+**Option B: import as zip**
+
+1. Zip `mod.hjson` and `scripts` so `mod.hjson` sits at the zip root:
    ```sh
-   cd turret-reach-indicator && zip -r ../turret-reach-indicator.zip mod.hjson scripts
+   zip -r turret-reach-indicator.zip mod.hjson scripts
    ```
 2. In game: **Mods → Import Mod → Import File** and choose the zip.
 3. Restart the game.
 
-**Option B: copy the folder**
+**Option C: copy the files**
 
-Copy the `turret-reach-indicator` folder into your Mindustry mods directory and restart:
+Create a `turret-reach-indicator` folder in your Mindustry mods directory, copy `mod.hjson` and `scripts` into it, and restart:
 
 | OS      | Mods directory                                     |
 |---------|----------------------------------------------------|
@@ -52,7 +58,6 @@ Copy the `turret-reach-indicator` folder into your Mindustry mods directory and 
 ## Files
 
 ```
-turret-reach-indicator/
 ├── mod.hjson         # mod metadata
 └── scripts/main.js   # all the logic
 ```
