@@ -1,0 +1,8 @@
+name: turret-reach-indicator
+displayName: Turret Reach Indicator
+author: Tomáš Rindt
+version: "1.0"
+minGameVersion: "147"
+description: "Shows turret ranges of your team on the minimap (all / merged / ground / air / extinguish / single type). Client-side only."
+# client-side only: servers and other players don't need it
+hidden: true
