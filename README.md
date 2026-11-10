@@ -22,6 +22,8 @@ so you can see at a glance where your defense reaches and where the gaps are.
 
 - **Individual circles** option, if you prefer every turret's own range circle.
 - Works on the fullscreen map and the corner minimap.
+- Works alone or together with the sibling mods [Effect Area Indicator](https://github.com/TousTarm/Mindustry_effects_area_indicator_mod)
+  and [Power Grid Indicator](https://github.com/TousTarm/Mindustry_electric_grid_indicator_mod): their panels stack in one column.
 - Ranges include ammo range bonuses and update as you build or lose turrets.
 - Settings are remembered between games.
 - **Client-side only.** Works on any server, including ones without the mod. Other players don't need it.

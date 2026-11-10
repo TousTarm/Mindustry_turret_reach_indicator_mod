@@ -213,47 +213,59 @@ Events.on(WorldLoadEvent, () => {
 
 // ---- UI: compact panel in the top-right of the fullscreen map (M key), styled like the game's HUD ----
 
+// Shared top-right column on the fullscreen map; every minimap mod of this family stacks its panel into it,
+// so the panels never overlap, in any load order and with any of the mods installed alone.
+function mapPanel(){
+    let col = Core.scene.find("map-mod-panels");
+    if(col == null){
+        Vars.ui.hudGroup.fill(cons(root => {
+            // not root.visible(...): in JS that name resolves to the boolean field, not the method
+            root.visibility = boolp(() => Vars.ui.minimapfrag.shown());
+            root.top().right().margin(8);
+            col = root.table().get();
+            col.name = "map-mod-panels";
+        }));
+    }
+    return col;
+}
+
 // built on ClientLoadEvent: UI does not exist yet when scripts load
 Events.on(ClientLoadEvent, () => {
-    Vars.ui.hudGroup.fill(cons(root => {
-        // not root.visible(...): in JS that name resolves to the boolean field, not the method
-        root.visibility = boolp(() => Vars.ui.minimapfrag.shown());
-        root.top().right().margin(8);
+    const panel = mapPanel();
+    panel.table(cons(col => {
+        // [ Turret reach  (eye)(gear) ]
+        col.table(Styles.black6, cons(bar => {
+            bar.margin(2);
+            bar.add("Turret reach").style(Styles.outlineLabel).padLeft(8).padRight(6).growX().left();
+            bar.button(Icon.eyeSmall, Styles.clearNoneTogglei, () => {
+                enabled = !enabled;
+                save("tri-enabled", enabled);
+            }).size(36).checked(b => enabled).tooltip("Show turret ranges");
+            bar.button(Icon.settingsSmall, Styles.clearNoneTogglei, () => optionsOpen = !optionsOpen)
+                .size(36).checked(b => optionsOpen).tooltip("Options");
+        })).growX();
+        col.row();
 
-        root.table(cons(col => {
-            // [ Turret reach  (eye)(gear) ]
-            col.table(Styles.black6, cons(bar => {
-                bar.margin(2);
-                bar.add("Turret reach").style(Styles.outlineLabel).padLeft(8).padRight(6);
-                bar.button(Icon.eyeSmall, Styles.clearNoneTogglei, () => {
-                    enabled = !enabled;
-                    save("tri-enabled", enabled);
-                }).size(36).checked(b => enabled).tooltip("Show turret ranges");
-                bar.button(Icon.settingsSmall, Styles.clearNoneTogglei, () => optionsOpen = !optionsOpen)
-                    .size(36).checked(b => optionsOpen).tooltip("Options");
-            })).fillX();
-            col.row();
+        const opts = col.table(Styles.black6, cons(o => {
+            o.margin(2);
+            o.defaults().height(32).growX();
 
-            const opts = col.table(Styles.black6, cons(o => {
-                o.margin(2);
-                o.defaults().height(32).growX();
-
-                FILTERS.forEach(f => {
-                    o.button((f.color ? "[#" + f.color + "]" : "") + f.label, Styles.clearTogglet, () => {
-                        filterId = f.id;
-                        save("tri-filter", f.id);
-                    }).checked(b => filterId == f.id);
-                    o.row();
-                });
-
-                o.image().color(Pal.gray).height(2).pad(2);
+            FILTERS.forEach(f => {
+                o.button((f.color ? "[#" + f.color + "]" : "") + f.label, Styles.clearTogglet, () => {
+                    filterId = f.id;
+                    save("tri-filter", f.id);
+                }).checked(b => filterId == f.id);
                 o.row();
-                o.button("Individual circles", Styles.clearTogglet, () => {
-                    individual = !individual;
-                    save("tri-individual", individual);
-                }).checked(b => individual);
-            })).fillX().padTop(2).get();
-            opts.visibility = boolp(() => optionsOpen);
-        }));
-    }));
+            });
+
+            o.image().color(Pal.gray).height(2).pad(2);
+            o.row();
+            o.button("Individual circles", Styles.clearTogglet, () => {
+                individual = !individual;
+                save("tri-individual", individual);
+            }).checked(b => individual);
+        })).growX().padTop(2).get();
+        opts.visibility = boolp(() => optionsOpen);
+    })).growX().padBottom(4);
+    panel.row();
 });
